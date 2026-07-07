@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 230" width="180" height="230">
+
+  <!-- ── LEGS ── -->
+  <rect x="62" y="186" width="22" height="32" rx="6" fill="#2A2A2A"/>
+  <rect x="96" y="186" width="22" height="32" rx="6" fill="#2A2A2A"/>
+
+  <!-- ── FEET ── -->
+  <rect x="50" y="210" width="36" height="16" rx="7" fill="#1A1A1A"/>
+  <rect x="94" y="210" width="36" height="16" rx="7" fill="#1A1A1A"/>
+  <!-- foot orange stripe -->
+  <rect x="50" y="219" width="36" height="7" rx="3" fill="#E6820A"/>
+  <rect x="94" y="219" width="36" height="7" rx="3" fill="#E6820A"/>
+
+  <!-- ── BODY ── -->
+  <rect x="48" y="148" width="84" height="50" rx="9" fill="#2A2A2A"/>
+  <!-- chest orange band -->
+  <rect x="48" y="162" width="84" height="16" fill="#E6820A"/>
+  <!-- chest emblem — wrench shape simplified -->
+  <rect x="83" y="155" width="14" height="30" rx="4" fill="#FFB830"/>
+  <rect x="76" y="160" width="28" height="10" rx="4" fill="#FFB830"/>
+  <!-- body outline -->
+  <rect x="48" y="148" width="84" height="50" rx="9" fill="none" stroke="#111" stroke-width="2"/>
+
+  <!-- ── LEFT ARM ── -->
+  <rect x="10" y="152" width="38" height="18" rx="9" fill="#2A2A2A"/>
+  <circle cx="12" cy="161" r="11" fill="#E6820A"/>
+  <circle cx="12" cy="161" r="11" fill="none" stroke="#111" stroke-width="1.5"/>
+
+  <!-- ── RIGHT ARM ── -->
+  <rect x="132" y="152" width="38" height="18" rx="9" fill="#2A2A2A"/>
+  <circle cx="168" cy="161" r="11" fill="#E6820A"/>
+  <circle cx="168" cy="161" r="11" fill="none" stroke="#111" stroke-width="1.5"/>
+
+  <!-- ── HELMET — big round head, dominates the design ── -->
+  <circle cx="90" cy="85" r="76" fill="#FFD700"/>
+  <!-- dome highlight -->
+  <ellipse cx="68" cy="52" rx="30" ry="20" fill="#FFE566" opacity="0.45"/>
+  <!-- dome outline -->
+  <circle cx="90" cy="85" r="76" fill="none" stroke="#B8860B" stroke-width="2.5"/>
+
+  <!-- ── BRIM ── -->
+  <ellipse cx="90" cy="148" rx="80" ry="13" fill="#E6AA00"/>
+  <ellipse cx="90" cy="145" rx="80" ry="13" fill="#FFD700"/>
+  <ellipse cx="90" cy="143" rx="80" ry="12" fill="#E6AA00"/>
+  <ellipse cx="90" cy="143" rx="80" ry="12" fill="none" stroke="#B8860B" stroke-width="2"/>
+
+  <!-- ── VISOR — dark band across lower helmet ── -->
+  <ellipse cx="90" cy="105" rx="58" ry="26" fill="#1A1A1A"/>
+
+  <!-- ── SINGLE EYE — glowing, expressive ── -->
+  <circle cx="90" cy="105" r="20" fill="#E6820A"/>
+  <circle cx="90" cy="105" r="14" fill="#FFB830"/>
+  <circle cx="90" cy="105" r="8"  fill="#FFE566"/>
+  <!-- pupil -->
+  <circle cx="90" cy="107" r="4"  fill="#1A1A1A"/>
+  <!-- shine -->
+  <circle cx="96" cy="99"  r="3.5" fill="white" opacity="0.7"/>
+
+  <!-- ── RIVET on top ── -->
+  <circle cx="90" cy="13" r="7"  fill="#B8860B"/>
+  <circle cx="90" cy="13" r="4"  fill="#FFE566"/>
+
+  <!-- ── ANTENNA ── -->
+  <line x1="90" y1="13" x2="90" y2="9" stroke="#B8860B" stroke-width="3" stroke-linecap="round"/>
+
+</svg>

@@ -1,0 +1,11 @@
+# Your private 4ORMan plugins — git-ignored, never pushed.
+# Copy this file to plugins.local.yml and add your own repos.
+# Run /setup to clone them into this 4ORMan instance.
+
+# git clone uses your existing SSH key or HTTPS credentials.
+# If a repo is private and you don't have access, it is skipped silently.
+
+plugins:
+  - name: my-project
+    repo: git@github.com:your-username/my-project
+    description: Replace with your repo and description

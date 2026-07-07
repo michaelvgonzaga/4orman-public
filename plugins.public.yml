@@ -1,0 +1,12 @@
+# Public 4ORMan plugins — anyone who installs 4ORMan can install these via /setup.
+# These extend 4ORMan itself: new commands, skills, or knowledgebase entries.
+# Add your own public plugins here. Community plugins can be listed too.
+
+plugins: []
+
+# Example entry:
+#
+# plugins:
+#   - name: my-plugin
+#     repo: https://github.com/username/my-plugin
+#     description: What this plugin adds to 4ORMan

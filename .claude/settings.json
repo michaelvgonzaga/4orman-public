@@ -1,0 +1,100 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Bash(ls)",
+      "Bash(ls *)",
+      "Bash(find . *)",
+      "Bash(grep *)",
+      "Bash(git status)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git branch *)",
+      "Bash(git clone *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git fetch *)",
+      "Bash(git tag *)",
+      "Bash(git -C *)",
+      "Bash(git push *)",
+      "Bash(git push --force https://github.com/michaelvgonzaga/*-public.git *)",
+      "Bash(git checkout *)",
+      "Bash(git stash *)",
+      "Bash(pwd)",
+      "Bash(zip *)",
+      "Bash(unzip *)",
+      "Bash(4orman-tools *)",
+      "Bash(gh *)",
+      "Bash(zig *)",
+      "Bash(brew *)",
+      "Bash(echo *)",
+      "Bash(wc *)",
+      "Bash(sysctl *)",
+      "Bash(jq *)",
+      "Bash(cat *)",
+      "Bash(which *)",
+      "Bash(curl *)"
+    ],
+    "deny": [
+      "Bash(rm *)",
+      "Bash(git push --force origin *)",
+      "Bash(git reset --hard *)",
+      "Bash(npm publish *)",
+      "Bash(sudo *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/bin/session-start-hook.py\" 2>/dev/null || echo '{}'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/bin/task-log-hook.py\" 2>/dev/null || echo '{}'"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/bin/session-end-hook.py\" 2>/dev/null || echo '{}'"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "4orman-tools session-snapshot \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\" 2>/dev/null | python3 -c \"import sys,json,os; d=json.load(sys.stdin); v=d.get('version','?'); step=d.get('current','?'); ctx='Ground truth from session-snapshot:\\n'+json.dumps(d,indent=2); r={'hookSpecificOutput':{'hookEventName':'PreCompact','additionalContext':ctx}}; _p=os.path.expanduser('~/.4orman/4orman-quiet'); q=open(_p).read().strip()=='1' if os.path.exists(_p) else False; (r.update({'systemMessage':'4orman-tools session-snapshot v'+str(v)+' — next: '+str(step)}) if not q else None); print(json.dumps(r))\" 2>/dev/null || echo '{}'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/bin/stop-hook.py\" 2>/dev/null || echo '{}'"
+          }
+        ]
+      }
+    ]
+  }
+}

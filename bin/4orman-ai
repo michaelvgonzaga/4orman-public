@@ -1,0 +1,208 @@
+#!/bin/bash
+set -e
+
+# --- dependency checks -------------------------------------------------
+
+if command -v 4orman-tools >/dev/null 2>&1; then
+  _doctor="$(4orman-tools doctor 2>/dev/null)"
+  if echo "$_doctor" | grep -q '"claude": false'; then
+    echo ""
+    echo "  ERROR: Claude Code is not installed."
+    echo "  Install Claude Code from https://claude.ai/code to use 4ORMan."
+    echo ""
+    exit 1
+  fi
+  if echo "$_doctor" | grep -q '"git": false'; then
+    echo ""
+    echo "  ERROR: Git is not installed."
+    echo "  Run: brew install git"
+    echo ""
+    exit 1
+  fi
+  if echo "$_doctor" | grep -q '"gh": false'; then
+    echo "  NOTE: GitHub CLI (gh) is not installed. Run: brew install gh"
+  fi
+else
+  if ! command -v claude >/dev/null 2>&1; then
+    echo "  ERROR: Claude Code is not installed."
+    echo "  Install Claude Code from https://claude.ai/code to use 4ORMan."
+    exit 1
+  fi
+  if ! command -v git >/dev/null 2>&1; then
+    echo "  ERROR: Git is not installed. Run: brew install git"
+    exit 1
+  fi
+fi
+
+# --- locate or initialize the workspace --------------------------------
+# Walk up the directory tree first so running 4orman-ai from inside an
+# existing workspace (or a project subdirectory) never creates a nested
+# 4orman/4orman.
+
+_find_workspace_root() {
+  local dir="$PWD"
+  while [ "$dir" != "/" ]; do
+    if [ -f "$dir/CLAUDE.md" ] && [ -d "$dir/.claude" ]; then
+      echo "$dir"
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+
+DEST="$(_find_workspace_root 2>/dev/null || true)"
+
+if [ -z "$DEST" ]; then
+  DEST="$PWD/4orman"
+  if [ ! -d "$DEST" ]; then
+    echo "Initializing 4orman in $DEST ..."
+    if ! git clone --quiet https://github.com/michaelvgonzaga/4orman.git "$DEST"; then
+      echo "  ERROR: git clone failed and no local fallback is available."
+      exit 1
+    fi
+    touch "$DEST/.first-run"
+  fi
+fi
+
+cd "$DEST"
+
+# --- splash --------------------------------------------------------------
+
+_cols="$(tput cols 2>/dev/null || echo 80)"
+_lines="$(tput lines 2>/dev/null || echo 24)"
+
+if [ -z "$NO_COLOR" ] && [ -t 1 ] && [ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]; then
+  _bold="$(tput bold 2>/dev/null)"; _dim="$(tput dim 2>/dev/null)"; _reset="$(tput sgr0 2>/dev/null)"
+  _cyan="$(tput setaf 6 2>/dev/null)"; _yellow="$(tput setaf 3 2>/dev/null)"
+else
+  _bold=""; _dim=""; _reset=""; _cyan=""; _yellow=""
+fi
+
+_center() {
+  local line="$1" pad=$(( (_cols - ${#1}) / 2 ))
+  [ "$pad" -lt 0 ] && pad=0
+  printf '%*s%s\n' "$pad" "" "$line"
+}
+
+_trunc() {
+  local s="$1" max="$2"
+  [ "$max" -lt 10 ] && max=10
+  if [ "${#s}" -gt "$max" ]; then printf '%s…' "${s:0:$((max - 1))}"; else printf '%s' "$s"; fi
+}
+
+BANNER_LINES=(
+  ' ██╗  ██╗ ██████╗ ██████╗ ███╗   ███╗ █████╗ ███╗   ██╗'
+  '██║  ██║██╔═══██╗██╔══██╗████╗ ████║██╔══██╗████╗  ██║'
+  '███████║██║   ██║██████╔╝██╔████╔██║███████║██╔██╗ ██║'
+  '╚════██║██║   ██║██╔══██╗██║╚██╔╝██║██╔══██║██║╚██╗██║'
+  '     ██║╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║██║ ╚████║'
+  '     ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝'
+  ''
+  '4 O R M a n'
+  'Build • Verify • Share • Remember'
+)
+
+clear 2>/dev/null || true
+_top_pad=$(( (_lines - ${#BANNER_LINES[@]} - 3) / 2 ))
+[ "$_top_pad" -lt 0 ] && _top_pad=0
+for ((_i = 0; _i < _top_pad; _i++)); do echo ""; done
+for _line in "${BANNER_LINES[@]}"; do _center "${_bold}${_cyan}${_line}${_reset}"; done
+_center "$(printf '%80s' '' | tr ' ' '─')" | cut -c "1-${_cols}"
+
+if [ -f "$DEST/_projects.md" ]; then
+  echo ""
+  echo "  ${_bold}${_cyan}ACTIVE PROJECTS${_reset}"
+  _proj_desc_max=$(( _cols - 26 ))
+  while IFS='|' read -r _name _goal; do
+    [ -z "$_name" ] && continue
+    printf "    ${_cyan}▸ %-20s${_reset} ${_dim}%s${_reset}\n" "$_name" "$(_trunc "$_goal" "$_proj_desc_max")"
+  done < <(awk -F'|' '/^\| *[A-Za-z0-9_-]+ *\|.*`active`/ {gsub(/^ +| +$/,"",$2); gsub(/^ +| +$/,"",$7); print $2 "|" $7}' "$DEST/_projects.md")
+fi
+
+if [ -f "$DEST/.claude/commands/help.md" ]; then
+  echo ""
+  echo "  ${_bold}${_cyan}COMMANDS${_reset}  ${_dim}(run /help anytime for this list)${_reset}"
+  _cmd_desc_max=$(( _cols - 30 ))
+  while IFS='|' read -r _kind _a _b; do
+    if [ "$_kind" = "S" ]; then
+      case "$_a" in "Plugin files"|"First time here?") continue ;; esac
+      echo ""
+      echo "  ${_bold}${_yellow}${_a}${_reset}"
+    else
+      printf "    ${_cyan}%-24s${_reset} ${_dim}%s${_reset}\n" "$_a" "$(_trunc "$_b" "$_cmd_desc_max")"
+    fi
+  done < <(awk -F'|' '
+    /^\*\*.+\*\*$/ { s=$0; gsub(/^\*\*|\*\* *$/,"",s); print "S|" s; next }
+    /^\| *`\// {
+      cmd=$2; desc=$3
+      gsub(/^ *`|`? *$/,"",cmd); gsub(/^ +| +$/,"",desc); gsub(/`/,"",desc)
+      split(cmd, a, " ")
+      print "C|" a[1] "|" desc
+    }
+  ' "$DEST/.claude/commands/help.md")
+fi
+
+echo ""
+_center "$(printf '%80s' '' | tr ' ' '─')" | cut -c "1-${_cols}"
+
+# --- mode: ask every launch, honored only for this terminal session -----
+
+read -r -p "  Enable auto-pilot for this session — Claude decides and builds without asking? [Y/n] " _ans
+case "$_ans" in
+  [nN]*) export FOREMAN_MODE="gate" ;;
+  *)     export FOREMAN_MODE="autopilot" ;;
+esac
+echo "  Mode: $FOREMAN_MODE for this terminal (say /gate inside Claude to flip it; closing this terminal resets it)."
+
+echo "═══════════════════════════════════════════════════════════════════════════════"
+echo ""
+echo "> booting 4ORMan..."
+echo ""
+
+_check() {
+  local label="$1" ok="$2"
+  if [ "$ok" = "1" ]; then
+    echo "  ✓ $label"
+  else
+    echo "  ✗ $label — not found yet, first-run will set this up"
+  fi
+}
+
+[ -f "$HOME/.4orman/profile.json" ] && _p=1 || _p=0
+_check "Loading device profile..." "$_p"
+[ -f "$HOME/.4orman/ledger.json" ] && _l=1 || _l=0
+_check "Loading verified ledger..." "$_l"
+[ -d "$DEST/_knowledgebase" ] && _k=1 || _k=0
+_check "Restoring knowledge graph..." "$_k"
+[ -d "$HOME/.4orman/state" ] && _s=1 || _s=0
+_check "Restoring project state..." "$_s"
+[ -d "$DEST/_workers" ] && _w=1 || _w=0
+_check "Awakening required workers..." "$_w"
+if command -v 4orman-tools >/dev/null 2>&1 && echo "$_doctor" | grep -q '"claude": true'; then _e=1; else _e=0; fi
+_check "Verifying environment..." "$_e"
+
+# --- user profiles: list + pick if more than one is registered ---------
+
+if [ -f "$HOME/.4orman/profiles.json" ] && command -v jq >/dev/null 2>&1; then
+  _pcount=$(jq '.profiles | length' "$HOME/.4orman/profiles.json" 2>/dev/null || echo 0)
+  if [ "$_pcount" -gt 1 ] 2>/dev/null; then
+    echo ""
+    echo "  USER PROFILES"
+    jq -r '.profiles[] | "    ▸ " + .id + "  (" + .githubUser + ")"' "$HOME/.4orman/profiles.json"
+    _default=$(jq -r '.default' "$HOME/.4orman/profiles.json")
+    read -r -p "  Load which profile? [$_default] " _pick
+    export FOREMAN_PROFILE="${_pick:-$_default}"
+    echo "  Profile: $FOREMAN_PROFILE"
+  elif [ "$_pcount" -eq 1 ] 2>/dev/null; then
+    export FOREMAN_PROFILE=$(jq -r '.profiles[0].id' "$HOME/.4orman/profiles.json")
+  fi
+fi
+echo "  ✓ Ready."
+echo ""
+echo "═══════════════════════════════════════════════════════════════════════════════"
+echo ""
+echo '      "AI proposes. 4ORMan verifies. You remain in control."'
+echo ""
+
+exec claude
